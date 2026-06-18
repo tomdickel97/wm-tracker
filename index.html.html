@@ -1263,10 +1263,19 @@ function initFirebase() {
       });
       if (data.settings) {
         settings = data.settings;
-        document.getElementById("s-bankroll").value = settings.bankroll;
-        document.getElementById("s-roi").value = settings.roi;
-        document.getElementById("s-maxday").value = settings.maxday;
-        document.getElementById("s-maxbet").value = settings.maxbet;
+        // Ensure numeric values
+        settings.bankroll = parseNum(settings.bankroll) || 200;
+        settings.roi = parseNum(settings.roi) || 8;
+        settings.maxday = parseNum(settings.maxday) || 10;
+        settings.maxbet = parseNum(settings.maxbet) || 5;
+        const el_br = document.getElementById("s-bankroll");
+        const el_roi = document.getElementById("s-roi");
+        const el_day = document.getElementById("s-maxday");
+        const el_bet = document.getElementById("s-maxbet");
+        if (el_br) el_br.value = settings.bankroll;
+        if (el_roi) el_roi.value = settings.roi;
+        if (el_day) el_day.value = settings.maxday;
+        if (el_bet) el_bet.value = settings.maxbet;
       }
       console.log("bets loaded:", Object.keys(bets).length, "entries, sample:", JSON.stringify(bets[1] || bets["1"] || "none"));
       console.log("bets keys:", Object.keys(bets).slice(0,5));
@@ -1540,7 +1549,10 @@ function updateAll() {
     const pct = parseNum(b.pct) || 0;
     const quote = parseNum(b.quote) || 0;
     if (pct > 0) {
-      const invested = br * pct / 100;
+      // Use euroFixed (frozen amount) if available, else calculate
+      const invested = b.euroFixed && parseNum(b.euroFixed) > 0 
+        ? parseNum(b.euroFixed) 
+        : br * pct / 100;
       totalInvested += invested;
       if (b.result === "Gewonnen" && quote > 0) { totalPnl += invested * (quote - 1); won++; }
       else if (b.result === "Verloren") { totalPnl -= invested; lost++; }
